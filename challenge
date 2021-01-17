@@ -1,0 +1,38 @@
+#!
+echo "Type in the amount of random generated strings you would like to see"
+read n
+
+fileName=$(mktemp -u tmp.XXX)
+if [ -e $fileName ]
+then
+	echo "File already exists"
+else
+	touch $fileName
+fi
+
+# sets limit to file size 
+# (max size is 1024*1000 bytes in this case. Meaning 1MB)
+ulimit -f 1000 $fileName
+
+# two ways to find size of a file 
+#ls -lh | grep $fileName
+#wc -c $fileName
+
+for ((i=1; i <=$n; i++))
+do
+	# each string is of random length
+	m=$(shuf -i 1-15 -n 1)
+	# the tr -cd option takes input, discards what isn't any 
+	# of the characters
+	# described in set1 (A-Za-z0-9) and displays the first random amount of
+	# elements
+	tr -cd [A-Za-z0-9] < /dev/urandom | head -c $m >> $fileName
+	echo '' >> $fileName
+done
+
+sort -f -o $fileName $fileName
+
+sed /^[aA].*/d $fileName > alteredFile
+
+count=$(diff alteredFile $fileName | wc -l)
+echo $(($count-1)) lines have been removed
